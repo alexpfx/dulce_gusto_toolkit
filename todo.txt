@@ -1,0 +1,15 @@
+
+-> criar bloc com entrada o código e saída o resultado da tentativa de adição.
+-> criar chamada e UI que abrigará a câmera.
+
+-> criar estrutura para cadastrar o código na página.
+
+
+-> tratar login
+-- testar automaticamente quando usuário altera credenciais.
+-- colocar indicativo de credenciais validas na tela de cadastro
+
+
+
+
+
