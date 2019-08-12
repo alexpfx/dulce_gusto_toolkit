@@ -1,5 +1,10 @@
+import 'package:dio/dio.dart';
 import 'package:dulce_gusto_toolkit/constants.dart';
+import 'package:dulce_gusto_toolkit/coupons/bloc/connection/conn.dart';
+import 'package:dulce_gusto_toolkit/coupons/dg_session.dart';
+import 'package:dulce_gusto_toolkit/coupons/user/user_credentials.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -18,12 +23,26 @@ class _DolceGustoCredentialsPreferenceScreenState
   TextEditingController _passController = TextEditingController();
 
   bool _isObscurePassword = true;
+  String _user;
+  String _pass;
+
+  _onCheckConnection() {
+    var connectionBloc = BlocProvider.of<ConnectionBloc>(context);
+    print('user: $_user');
+    connectionBloc.dispatch(
+        LoginDgEvent(DolceGustoSession(Dio(), UserCredentials(_user, _pass))));
+  }
 
   @override
   initState() {
-    loadPreferences();
-
     super.initState();
+    _emailController.addListener(() {
+      _user = _emailController.text;
+    });
+    _passController.addListener(() {
+      _pass = _passController.text;
+    });
+    loadPreferences();
   }
 
   Future<bool> loadPreferences() async {
@@ -64,7 +83,6 @@ class _DolceGustoCredentialsPreferenceScreenState
               ListTile(
                 title: TextField(
                   controller: _passController,
-                  onChanged: _onPassChanged,
                   obscureText: _isObscurePassword,
                   decoration: InputDecoration(
                     hintText: 'Password',
@@ -84,6 +102,7 @@ class _DolceGustoCredentialsPreferenceScreenState
                       });
                     }),
               ),
+              new CheckCredentials(_onCheckConnection)
             ],
           ),
         ),
@@ -99,8 +118,6 @@ class _DolceGustoCredentialsPreferenceScreenState
     super.dispose();
   }
 
-  void _onPassChanged(String value) {}
-
   Future<bool> _onWillPop() async {
     var sp = await _sharedPreferences;
     var email = _emailController.text;
@@ -110,5 +127,55 @@ class _DolceGustoCredentialsPreferenceScreenState
     sp.setString(kDolceGustoPassKey, pass);
 
     return true;
+  }
+}
+
+class CheckCredentials extends StatelessWidget {
+  final VoidCallback onCheckConnection;
+
+  CheckCredentials(this.onCheckConnection);
+
+  @override
+  Widget build(BuildContext context) {
+    var connectionBloc = BlocProvider.of<ConnectionBloc>(context);
+    print('CheckCredentials');
+    return BlocBuilder(
+        bloc: connectionBloc,
+        builder: (BuildContext context, ConnState state) =>
+            _build(state.asEnum, connectionBloc));
+  }
+
+  _build(EnumConnectionState state, ConnectionBloc connectionBloc) {
+    String status;
+    TextStyle style = TextStyle(fontSize: 14);
+    switch (state) {
+      case EnumConnectionState.initial:
+        status = 'check connection';
+        style = style.copyWith(color: Colors.white);
+        break;
+      case EnumConnectionState.connecting:
+        status = 'connecting...';
+        style = style.copyWith(color: Colors.yellow);
+        break;
+      case EnumConnectionState.login_succefull:
+        status = 'successful connect';
+        style = style.copyWith(color: Colors.green);
+        break;
+      case EnumConnectionState.could_not_connect:
+        status = 'could not connect';
+        style = style.copyWith(color: Colors.red);
+        break;
+    }
+
+    return ListTile(
+      trailing: Container(width: 40),
+      leading: Container(width: 40),
+      title: MaterialButton(
+          onPressed: onCheckConnection,
+          child: Text(
+            status,
+            style: style,
+          )),
+    );
   }
 }

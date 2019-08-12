@@ -1,5 +1,9 @@
+import 'dart:io';
+
+import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
 import 'package:dulce_gusto_toolkit/coupons/bonus_points.dart';
+import 'package:dulce_gusto_toolkit/coupons/user/user_credentials.dart';
 import 'package:html/parser.dart' as html;
 
 const baseUrl = 'https://www.nescafe-dolcegusto.com.br/m/';
@@ -10,7 +14,7 @@ const myBonusGet = baseUrl + 'mybonus';
 const accountEditGet = baseUrl + 'customer/account/edit';
 const submitBonusPost = baseUrl + 'pcm/customer_account_bonus/couponPost/';
 const kLogoutGet = baseUrl + 'customer/account/logout/';
-const kLogoutSuccess = baseUrl + 'customer/account/logoutSuccess/';
+const kLogoutSuccessGet = baseUrl + 'customer/account/logoutSuccess/';
 
 loginFormData(user, pass, formKey) => {
       'login[username]': user,
@@ -20,6 +24,11 @@ loginFormData(user, pass, formKey) => {
       'send': ''
     };
 
+_getMessages(data) {
+  var parsed = html.parse(data);
+  return parsed?.querySelector('ul.messages')?.text ?? "";
+}
+
 String _parseFormKey(data) {
   var formKey = html
       .parse(data)
@@ -28,54 +37,52 @@ String _parseFormKey(data) {
   return formKey;
 }
 
-class DolceGustoSession implements DgSession {
-  void log(Object message) {
-    print(message);
-  }
-
+class DolceGustoSession {
   final Dio dio;
   final Function(dynamic data) formKeyParser;
+  final _cookieJar = DefaultCookieJar();
+  final UserCredentials _credentials;
 
-  DolceGustoSession(this.dio, {this.formKeyParser = _parseFormKey}) {
+  DolceGustoSession(this.dio, this._credentials,
+      {this.formKeyParser = _parseFormKey}) {
     assert(dio != null, "dio is null");
+
+    dio.options = BaseOptions(
+        contentType: ContentType.parse("application/x-www-form-urlencoded"),
+        followRedirects: false,
+        validateStatus: (s) => s < 500);
+
+    dio.interceptors.add(CookieManager(_cookieJar));
+    dio.interceptors.add(InterceptorsWrapper(onResponse: (r) {
+      log(r.statusCode);
+      return r;
+    }));
   }
 
-  Future<bool> login(String username, String password) async {
-    print('login: $username');
-    final getResponse = await dio.get(accountLoginGet);
-    print('getResponse');
+  Future<void> login() async {
+    await _login(_credentials.login, _credentials.password);
+  }
+
+  Future<void> _login(String username, String password) async {
+    _cookieJar.deleteAll();
+    log('tentando logar: $username $password');
+
+    final getResponse = await dio.get((accountLoginGet));
 
     if (getResponse.statusCode == 200) {
-      final formKey = formKeyParser(getResponse.data);
-
-      final postResponse = await dio.post(accountLoginPost,
+      final formKey = _parseFormKey(getResponse.data);
+      await dio.post(accountLoginPost,
           data: loginFormData(username, password, formKey));
-      log('posting form data');
-
-      if (postResponse.statusCode == 302) {
-        return isLogged;
-      }
     }
-    print('login failed');
-    return Future.error('login failed');
   }
 
-  @override
-  Future<bool> logout() async {
-    if (await isLogged) {
-      var v = await dio.get(kLogoutGet);
-      if (v.statusCode == 302) {
-        return _isOk(await dio.get(kLogoutSuccess));
-      }
-      return false;
-    }
-    return true;
+  Future<void> logout() async {
+    await dio.get(kLogoutGet);
+    _cookieJar.deleteAll();
   }
 
-  @override
-  Future<String> get clientName => _clientName();
+  Future<bool> get isLogged => _isLogged();
 
-  @override
   Future<int> get bonusPoints async {
     if (!await _isLogged()) {
       return null;
@@ -83,36 +90,34 @@ class DolceGustoSession implements DgSession {
     return BonusPointsParser(dio, myBonusGet).parsePoints;
   }
 
-  @override
-  Future<bool> get isLogged => _isLogged();
+  Future<bool> _isLogged() async {
+    await dio.get(myBonusGet);
+    List<Cookie> cl = _cookieJar.loadForRequest(Uri.parse(myBonusGet));
+    print('cl: $cl');
 
-  @override
-  Future<bool> storeBonus(String code) async {
-    await dio.post(submitBonusPost, data: {'coupon_code[]': code}).then(
-        (response) async {
-      if (_isOk(response)) {
-        var r = await dio.get(myBonusGet);
-        return _isOk(r);
-      } else {
-        return false;
+    for (var value in cl) {
+      if (value.name == 'CUSTOMER_AUTH') {
+        return Future.value(true);
       }
-    });
-    return false;
+    }
+    return Future.value(false);
   }
 
-  @override
-  String get username => username;
+  Future<String> get clientName => _clientName();
+
+  Future<String> storeBonus(String code) async {
+    await dio.post(submitBonusPost, data: {'coupon_code[]': code}).then(
+        (Response response) async {
+      var r = await dio.get(myBonusGet);
+      var message = _getMessages(r.data);
+      return Future.value(message);
+    });
+
+    return Future.value(null);
+  }
 
   bool _isOk(Response response) {
     return response.statusCode == 200;
-  }
-
-  Future<bool> _isLogged() async {
-    try {
-      return _isOk(await dio.get(myBonusGet));
-    } catch (e) {
-      return Future.error(e);
-    }
   }
 
   Future<String> _clientName() async {
@@ -133,20 +138,8 @@ class DolceGustoSession implements DgSession {
       return null;
     }
   }
-}
 
-abstract class DgSession {
-  Future<bool> login(String username, String pass);
-
-  String get username;
-
-  Future<String> get clientName;
-
-  Future<bool> get isLogged;
-
-  Future<int> get bonusPoints;
-
-  Future<void> storeBonus(String code);
-
-  Future<bool> logout();
+  void log(Object message) {
+    print(message);
+  }
 }

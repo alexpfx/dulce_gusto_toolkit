@@ -10,6 +10,7 @@ enum EnumConnectionState {
   initial,
   connecting,
   login_succefull,
+  could_not_connect
 }
 
 class InitialState extends ConnState {
@@ -20,6 +21,11 @@ class InitialState extends ConnState {
 class ConnectingState extends ConnState {
   @override
   EnumConnectionState get asEnum => EnumConnectionState.connecting;
+}
+
+class CouldNotConnect extends ConnState {
+  @override
+  EnumConnectionState get asEnum => EnumConnectionState.could_not_connect;
 }
 
 class ConnectionSuccessState extends ConnState {

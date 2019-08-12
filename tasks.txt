@@ -1,6 +1,10 @@
+- criar botão 'cadastrar' na tela de códigos.
+- recuperar login e password da tela de códigos.
 - criar check connection na tela de credenciais.
-- alterar connection para 'check connection'.
 - tratar cancelamento no dio.
-- colocar no github.
+- tratar login incorreto.
+
+ok - alterar connection para 'check connection'.
+ok- colocar no github.
 ok- organizar pacotes.
 ok- limpar código removendo não utilizado.

@@ -1,15 +1,11 @@
-import 'dart:io';
-
-import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
 import 'package:dulce_gusto_toolkit/constants.dart';
-import 'package:dulce_gusto_toolkit/coupons/bloc/connection/conn.dart';
+import 'package:dulce_gusto_toolkit/coupons/bloc/redeem/redeem.dart';
 import 'package:dulce_gusto_toolkit/coupons/coupon.dart';
 import 'package:dulce_gusto_toolkit/coupons/coupon_card/coupon_tile.dart';
 import 'package:dulce_gusto_toolkit/coupons/dg_session.dart';
 import 'package:dulce_gusto_toolkit/coupons/menu_constants.dart';
 import 'package:dulce_gusto_toolkit/coupons/preference_screen/dolce_gusto_preference_screen.dart';
-import 'package:dulce_gusto_toolkit/coupons/redeem_screen/login_state_widget.dart';
 import 'package:dulce_gusto_toolkit/coupons/user/user_credentials.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -23,19 +19,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 ///
 ///
 ///
-class RedeemScreen extends StatefulWidget {
+
+class RedeemScreen extends StatelessWidget {
   final List<Coupon> coupons;
 
   RedeemScreen({@required this.coupons});
 
-  @override
-  _RedeemScreenState createState() => _RedeemScreenState();
-}
-
-class _RedeemScreenState extends State<RedeemScreen> {
   var _username;
   var _pass;
-  var _bloc = ConnectionBloc(DolceGustoSession(_createDio()));
+
+  BuildContext context;
 
   loadPreferences() async {
     var sh = await SharedPreferences.getInstance();
@@ -44,15 +37,8 @@ class _RedeemScreenState extends State<RedeemScreen> {
   }
 
   @override
-  void initState() {
-    loadPreferences();
-  }
-
-  _RedeemScreenState();
-
-  @override
   Widget build(BuildContext context) {
-    print('context 1: $context');
+    this.context = context;
     return Scaffold(
       appBar: AppBar(
         title: Text('Resgate de Códigos'),
@@ -63,32 +49,42 @@ class _RedeemScreenState extends State<RedeemScreen> {
           )
         ],
       ),
-      body: BlocProvider<ConnectionBloc>(
-        builder: (context) => _bloc,
-        child: Column(
-          children: <Widget>[
-            Expanded(
+      body: Column(
+        children: <Widget>[
+          BlocListener<RedeemBloc, RedeemState>(
+            bloc: BlocProvider.of<RedeemBloc>(context),
+            condition: (prevState, state) {
+              return state.asEnum == EnumRedeemState.succefull;
+            },
+            child: Expanded(
               child: ListView.builder(
                 itemBuilder: _builder,
-                itemCount: widget.coupons.length,
+                itemCount: coupons.length,
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Container(
-                height: kDefaultBarHeight,
-                child: _blocBuilderHandleLoginState(context),
-              ),
+            listener: (BuildContext context, state) {
+              if (state is SuccessfulState) {
+                var c = coupons.indexOf(state.coupon);
+
+                print('coupon na lista: $c');
+              }
+            },
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              height: kDefaultBarHeight,
+              child: _blocBuilderHandleLoginState(context),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _builder(BuildContext context, int index) {
-    return CouponTile(
-        widget.coupons[index].code, Icons.fiber_new, Colors.white);
+    return CouponTile(coupons[index].code, Icons.fiber_new, Colors.white);
   }
 
   List<PopupMenuEntry<String>> _menuBuilder(BuildContext context) {
@@ -110,39 +106,23 @@ class _RedeemScreenState extends State<RedeemScreen> {
     }
   }
 
-  Future _redeemButtonPress() async {}
+  Future _redeemButtonPress() async {
+    var bloc = BlocProvider.of<RedeemBloc>(context);
+    DolceGustoSession session = DolceGustoSession(Dio(), UserCredentials(_username, _pass));
+
+    for (var coupon in coupons) {
+      bloc.dispatch(RedeemCodeEvent(
+          session: session, coupon: coupon));
+    }
+  }
 
   Widget status() {}
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
   Widget _blocBuilderHandleLoginState(BuildContext _context) {
     print('context button $_context');
-    return LoginStateWidget(
-      redeemButtonPress: _redeemButtonPress,
-      connectButtonPress: _connectButtonPress,
+    return RaisedButton(
+      onPressed: _redeemButtonPress,
+      child: Text('Cadastrar'),
     );
-  }
-
-  _connectButtonPress() async {
-    var bloc = _bloc;
-    await loadPreferences();
-    print('login: $_username');
-    print('pass: $_pass');
-    bloc.dispatch(LoginDgEvent(UserCredentials(_username, _pass)));
-  }
-
-  static Dio _createDio() {
-    var cookieManager = CookieManager(CookieJar());
-    Dio dio = Dio()
-      ..options = BaseOptions(
-          contentType: ContentType.parse("application/x-www-form-urlencoded"),
-          followRedirects: false,
-          validateStatus: (s) => s < 500)
-      ..interceptors.add(cookieManager);
-    return dio;
   }
 }

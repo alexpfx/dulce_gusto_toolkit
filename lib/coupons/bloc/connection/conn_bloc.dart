@@ -6,9 +6,8 @@ import 'package:dulce_gusto_toolkit/coupons/bloc/connection/conn_state.dart';
 import 'package:dulce_gusto_toolkit/coupons/dg_session.dart';
 
 class ConnectionBloc extends Bloc<ConnectionEvent, ConnState> {
-  final DgSession _session;
 
-  ConnectionBloc(this._session);
+  ConnectionBloc();
 
   @override
   ConnState get initialState => InitialState();
@@ -16,24 +15,19 @@ class ConnectionBloc extends Bloc<ConnectionEvent, ConnState> {
   @override
   Stream<ConnState> mapEventToState(ConnectionEvent event) async* {
     if (event is LoginDgEvent) {
-      print('event: $event');
       yield ConnectingState();
-      String errMessage;
-      print("after event");
 
       try {
-        await _session.logout();
-        bool hasLogged = await _session
-            .login(event.userCredential.login, event.userCredential.password)
-            .catchError((err) {
-          errMessage = err;
-          throw err;
-        });
+        var session = event.session;
+        await session.login();
 
-        if (hasLogged) {
-          yield ConnectionSuccessState(hasLogged ? 'Ok' : errMessage);
+        if (await session.isLogged) {
+          yield ConnectionSuccessState("conexão ok");
+        }else{
+          yield CouldNotConnect();
         }
       } catch (e) {
+        print(e);
         yield InitialState();
       }
     }

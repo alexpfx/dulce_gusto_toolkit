@@ -1,3 +1,4 @@
+import 'package:dulce_gusto_toolkit/coupons/dg_session.dart';
 import 'package:dulce_gusto_toolkit/coupons/user/user_credentials.dart';
 import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
@@ -8,7 +9,7 @@ abstract class ConnectionEvent extends Equatable {
 }
 
 class LoginDgEvent extends ConnectionEvent {
-  final UserCredentials userCredential;
+  final DolceGustoSession session;
 
-  LoginDgEvent(this.userCredential) : super([userCredential]);
+  LoginDgEvent(this.session) : super([session]);
 }

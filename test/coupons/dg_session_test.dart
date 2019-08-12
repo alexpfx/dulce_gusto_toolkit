@@ -42,14 +42,6 @@ void main() {
       expect(result, isFalse);
     });
 
-    test('fail', () async {
-      when(dioMock.get(myBonusGet))
-          .thenThrow(ArgumentError());
-      await session.isLogged.catchError((Object e) {
-        expect(e, isArgumentError);
-      });
-    });
-
   });
 
 

@@ -1,13 +1,21 @@
 import 'dart:math';
 
+import 'package:dio/dio.dart';
+import 'package:dulce_gusto_toolkit/constants.dart';
+import 'package:dulce_gusto_toolkit/coupons/bloc/connection/conn.dart';
 import 'package:dulce_gusto_toolkit/coupons/coupon.dart';
 import 'package:dulce_gusto_toolkit/coupons/coupon_card/coupon_card.dart';
+import 'package:dulce_gusto_toolkit/coupons/dg_session.dart';
 import 'package:dulce_gusto_toolkit/coupons/menu_constants.dart';
 import 'package:dulce_gusto_toolkit/coupons/preference_screen/dolce_gusto_preference_screen.dart';
 import 'package:dulce_gusto_toolkit/coupons/redeem_screen/redeem_screen.dart';
 import 'package:dulce_gusto_toolkit/page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'bloc/redeem/redeem.dart';
 //import 'package:provider/provider.dart';
 
 /*
@@ -29,8 +37,9 @@ class _CouponPageState extends State<CouponPage> {
   List<Coupon> _coupons = [];
 
   final _controller = TextEditingController();
-
   final _formKey = GlobalKey<FormState>();
+  String _username = "";
+  String _pass = "";
 
   ScaffoldState scaffold;
 
@@ -65,80 +74,87 @@ class _CouponPageState extends State<CouponPage> {
     super.initState();
   }
 
+  loadPreferences() async {
+    var sh = await SharedPreferences.getInstance();
+    _username = sh.getString(kDolceGustoLoginKey);
+    _pass = sh.getString(kDolceGustoPassKey);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Page(
-      title: 'My Coupons',
-      body: _pageBuilder(context),
-      actions: <Widget>[
-        PopupMenuButton<String>(
-          itemBuilder: _menuItemBuilder,
-          onSelected: _choiceAction,
-        ),
-      ],
-      fab: FloatingActionButton(
-        onPressed: () {
-          showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                    title: Text(
-                      'Input the dolce gusto promo code',
-                    ),
-                    content: Form(
-                      key: _formKey,
-                      child: TextFormField(
-                        validator: (value) {
-                          if (value
-                                  .replaceAll(new RegExp(r"\s\b|\b\s"), "")
-                                  .length !=
-                              12) {
-                            return "code must have 12 characters excluding whitespaces";
-                          }
 
-                          return null;
-                        },
-                        inputFormatters: [
-                          LengthLimitingTextInputFormatter(14),
-                          BlacklistingTextInputFormatter.singleLineFormatter,
-                        ],
-                        textInputAction: TextInputAction.none,
-                        controller: _controller,
-                        decoration: InputDecoration(hintText: 'code'),
+    return Page(
+        title: 'My Coupons',
+        body: _pageBuilder(context),
+        actions: <Widget>[
+          PopupMenuButton<String>(
+            itemBuilder: _menuItemBuilder,
+            onSelected: _choiceAction,
+          ),
+        ],
+        fab: FloatingActionButton(
+          onPressed: () {
+            showDialog(
+                context: context,
+                builder: (context) => AlertDialog( //extrair
+                      title: Text(
+                        'Input the dolce gusto promo code',
                       ),
-                    ),
-                    actions: <Widget>[
-                      FlatButton(
-                        child: Text('Cancel'),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
+                      content: Form(
+                        key: _formKey,
+                        child: TextFormField(
+                          validator: (value) {
+                            if (value
+                                    .replaceAll(new RegExp(r"\s\b|\b\s"), "")
+                                    .length !=
+                                12) {
+                              return "code must have 12 characters excluding whitespaces";
+                            }
+
+                            return null;
+                          },
+                          inputFormatters: [
+                            LengthLimitingTextInputFormatter(14),
+                            BlacklistingTextInputFormatter.singleLineFormatter,
+                          ],
+                          textInputAction: TextInputAction.none,
+                          controller: _controller,
+                          decoration: InputDecoration(hintText: 'code'),
+                        ),
                       ),
-                      RaisedButton(
-                        textTheme: Theme.of(context).buttonTheme.textTheme,
-                        child: Text('Confirm'),
-                        onPressed: () {
-                          if (_formKey.currentState.validate()) {
-                            setState(() {
-                              _coupons.insert(
-                                  0,
-                                  Coupon(
-                                      _controller.text
-                                          .replaceAll(
-                                              new RegExp(r"\s\b|\b\s"), "")
-                                          .toUpperCase(),
-                                      dateAdded: DateTime.now(),
-                                      status: Status.added_new));
-                            });
+                      actions: <Widget>[
+                        FlatButton(
+                          child: Text('Cancel'),
+                          onPressed: () {
                             Navigator.of(context).pop();
-                            _controller.clear();
-                          }
-                        },
-                      )
-                    ],
-                  ));
-        },
-        child: Icon(Icons.add),
-      ),
+                          },
+                        ),
+                        RaisedButton(
+                          textTheme: Theme.of(context).buttonTheme.textTheme,
+                          child: Text('Confirm'),
+                          onPressed: () {
+                            if (_formKey.currentState.validate()) {
+                              setState(() {
+                                _coupons.insert(
+                                    0,
+                                    Coupon(
+                                        _controller.text
+                                            .replaceAll(
+                                                new RegExp(r"\s\b|\b\s"), "")
+                                            .toUpperCase(),
+                                        dateAdded: DateTime.now(),
+                                        status: Status.added_new));
+                              });
+                              Navigator.of(context).pop();
+                              _controller.clear();
+                            }
+                          },
+                        )
+                      ],
+                    ));
+          },
+          child: Icon(Icons.add),
+        ),
     );
   }
 
@@ -168,7 +184,7 @@ class _CouponPageState extends State<CouponPage> {
                                         .toList(),
                                   )));
                     },
-                    child: Text('Resgate'),
+                    child: Text('Resgatar Todos'),
                   )
                 ],
               ),
@@ -221,8 +237,9 @@ class _CouponPageState extends State<CouponPage> {
 
   List<PopupMenuEntry<String>> _menuItemBuilder(BuildContext context) {
     return [
-      kBuildMenuItem(Icons.verified_user, "Dc Credentials", "credentials"),
-      kBuildMenuItem(Icons.sort, "Sort", "sort")
+      kBuildMenuItem(Icons.sort, "Sort", "sort"),
+      kBuildMenuItem(Icons.verified_user, 'Credentials', 'credentials')
+
     ];
   }
 }
