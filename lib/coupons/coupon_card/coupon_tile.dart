@@ -6,12 +6,13 @@ class CouponTile extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
 
+
   CouponTile(this.code, this.icon, this.iconColor);
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      title: CouponCodeCard(code),
+      title: CouponCodeCard(code, RedeemResultStatus.info_ok),
       trailing: Padding(
         padding: EdgeInsets.only(right: 6),
         child: Icon(
