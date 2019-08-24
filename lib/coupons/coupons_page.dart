@@ -1,21 +1,14 @@
 import 'dart:math';
 
-import 'package:dio/dio.dart';
 import 'package:dulce_gusto_toolkit/constants.dart';
-import 'package:dulce_gusto_toolkit/coupons/bloc/connection/conn.dart';
+import 'package:dulce_gusto_toolkit/coupons/bonus_status_panel.dart';
 import 'package:dulce_gusto_toolkit/coupons/coupon.dart';
 import 'package:dulce_gusto_toolkit/coupons/coupon_card/coupon_card.dart';
-import 'package:dulce_gusto_toolkit/coupons/dg_session.dart';
 import 'package:dulce_gusto_toolkit/coupons/menu_constants.dart';
 import 'package:dulce_gusto_toolkit/coupons/preference_screen/dolce_gusto_preference_screen.dart';
-import 'package:dulce_gusto_toolkit/coupons/redeem_screen/redeem_screen.dart';
 import 'package:dulce_gusto_toolkit/page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import 'bloc/redeem/redeem.dart';
 //import 'package:provider/provider.dart';
 
 /*
@@ -82,85 +75,33 @@ class _CouponPageState extends State<CouponPage> {
 
   @override
   Widget build(BuildContext context) {
-
     return Page(
-        title: 'My Coupons',
-        body: _pageBuilder(context),
-        actions: <Widget>[
-          PopupMenuButton<String>(
-            itemBuilder: _menuItemBuilder,
-            onSelected: _choiceAction,
-          ),
-        ],
-        fab: FloatingActionButton(
-          onPressed: () {
-            showDialog(
-                context: context,
-                builder: (context) => AlertDialog( //extrair
-                      title: Text(
-                        'Input the dolce gusto promo code',
-                      ),
-                      content: Form(
-                        key: _formKey,
-                        child: TextFormField(
-                          validator: (value) {
-                            if (value
-                                    .replaceAll(new RegExp(r"\s\b|\b\s"), "")
-                                    .length !=
-                                12) {
-                              return "code must have 12 characters excluding whitespaces";
-                            }
-
-                            return null;
-                          },
-                          inputFormatters: [
-                            LengthLimitingTextInputFormatter(14),
-                            BlacklistingTextInputFormatter.singleLineFormatter,
-                          ],
-                          textInputAction: TextInputAction.none,
-                          controller: _controller,
-                          decoration: InputDecoration(hintText: 'code'),
-                        ),
-                      ),
-                      actions: <Widget>[
-                        FlatButton(
-                          child: Text('Cancel'),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                        RaisedButton(
-                          textTheme: Theme.of(context).buttonTheme.textTheme,
-                          child: Text('Confirm'),
-                          onPressed: () {
-                            if (_formKey.currentState.validate()) {
-                              setState(() {
-                                _coupons.insert(
-                                    0,
-                                    Coupon(
-                                        _controller.text
-                                            .replaceAll(
-                                                new RegExp(r"\s\b|\b\s"), "")
-                                            .toUpperCase(),
-                                        dateAdded: DateTime.now(),
-                                        status: Status.added_new));
-                              });
-                              Navigator.of(context).pop();
-                              _controller.clear();
-                            }
-                          },
-                        )
-                      ],
-                    ));
-          },
-          child: Icon(Icons.add),
+      title: 'My Coupons',
+      body: _pageBuilder(context),
+      actions: <Widget>[
+        PopupMenuButton<String>(
+          itemBuilder: _menuItemBuilder,
+          onSelected: _choiceAction,
         ),
+      ],
     );
   }
 
   _pageBuilder(context) => Container(
         child: Column(
           children: <Widget>[
+            BonusStatusPanel(
+              customerName: 'alexandre alessi',
+              points: 80,
+            ),
+            Expanded(
+              child: ListView.builder(
+                physics: ClampingScrollPhysics(),
+                shrinkWrap: true,
+                itemCount: _coupons.length,
+                itemBuilder: _itemBuilder,
+              ),
+            ),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Row(
@@ -172,29 +113,10 @@ class _CouponPageState extends State<CouponPage> {
                   ),
                   RaisedButton(
                     onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              fullscreenDialog: true,
-                              settings: RouteSettings(),
-                              builder: (context) => RedeemScreen(
-                                    coupons: _coupons
-                                        .where(
-                                            (c) => c.status == Status.added_new)
-                                        .toList(),
-                                  )));
                     },
                     child: Text('Resgatar Todos'),
                   )
                 ],
-              ),
-            ),
-            Expanded(
-              child: ListView.builder(
-                physics: ClampingScrollPhysics(),
-                shrinkWrap: true,
-                itemCount: _coupons.length,
-                itemBuilder: _itemBuilder,
               ),
             ),
           ],
@@ -239,7 +161,6 @@ class _CouponPageState extends State<CouponPage> {
     return [
       kBuildMenuItem(Icons.sort, "Sort", "sort"),
       kBuildMenuItem(Icons.verified_user, 'Credentials', 'credentials')
-
     ];
   }
 }
