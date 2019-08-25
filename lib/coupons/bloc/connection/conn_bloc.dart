@@ -3,10 +3,8 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:dulce_gusto_toolkit/coupons/bloc/connection/conn_event.dart';
 import 'package:dulce_gusto_toolkit/coupons/bloc/connection/conn_state.dart';
-import 'package:dulce_gusto_toolkit/coupons/dg_session.dart';
 
 class ConnectionBloc extends Bloc<ConnectionEvent, ConnState> {
-
   ConnectionBloc();
 
   @override
@@ -15,15 +13,16 @@ class ConnectionBloc extends Bloc<ConnectionEvent, ConnState> {
   @override
   Stream<ConnState> mapEventToState(ConnectionEvent event) async* {
     if (event is LoginDgEvent) {
-      yield ConnectingState();
-
       try {
         var session = event.session;
-        await session.login();
+
+        await for (final message in session.login()){
+          yield new MessageSend(await message);
+        }
 
         if (await session.isLogged) {
           yield ConnectionSuccessState("conexão ok");
-        }else{
+        } else {
           yield CouldNotConnect();
         }
       } catch (e) {

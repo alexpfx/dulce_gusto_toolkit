@@ -26,9 +26,8 @@ class _DolceGustoCredentialsPreferenceScreenState
   String _user;
   String _pass;
 
-  _onCheckConnection() {
+  _onCheckConnectionClick() {
     var connectionBloc = BlocProvider.of<ConnectionBloc>(context);
-    print('user: $_user');
     connectionBloc.dispatch(
         LoginDgEvent(DolceGustoSession(Dio(), UserCredentials(_user, _pass))));
   }
@@ -102,7 +101,7 @@ class _DolceGustoCredentialsPreferenceScreenState
                       });
                     }),
               ),
-              new CheckCredentials(_onCheckConnection)
+              new CheckCredentials(_onCheckConnectionClick)
             ],
           ),
         ),
@@ -140,33 +139,35 @@ class CheckCredentials extends StatelessWidget {
     var connectionBloc = BlocProvider.of<ConnectionBloc>(context);
     print('CheckCredentials');
     return BlocBuilder(
-        bloc: connectionBloc,
-        builder: (BuildContext context, ConnState state) =>
-            _build(state.asEnum, connectionBloc));
+      bloc: connectionBloc,
+      builder: (BuildContext context, state) => _build(context, state),
+    );
   }
 
-  _build(EnumConnectionState state, ConnectionBloc connectionBloc) {
+  _build(BuildContext context, ConnState state) {
     String status;
     TextStyle style = TextStyle(fontSize: 14);
-    switch (state) {
-      case EnumConnectionState.initial:
-        status = 'check connection';
-        style = style.copyWith(color: Colors.white);
-        break;
-      case EnumConnectionState.connecting:
-        status = 'connecting...';
-        style = style.copyWith(color: Colors.yellow);
-        break;
-      case EnumConnectionState.login_succefull:
-        status = 'successful connect';
-        style = style.copyWith(color: Colors.green);
-        break;
-      case EnumConnectionState.could_not_connect:
-        status = 'could not connect';
-        style = style.copyWith(color: Colors.red);
-        break;
+
+    if (state is InitialState) {
+      status = 'check connection';
+      style = style.copyWith(color: Colors.white);
+    }
+    if (state is MessageSend) {
+      print('message: ${state.message}');
+      status = state.message;
+      style = style.copyWith(color: Colors.yellow);
     }
 
+    if (state is ConnectionSuccessState) {
+      status = 'successful connect';
+      style = style.copyWith(color: Colors.green);
+    }
+    if (state is CouldNotConnect) {
+      status = 'could not connect';
+      style = style.copyWith(color: Colors.red);
+    }
+
+    print('status: $status');
     return ListTile(
       trailing: Container(width: 40),
       leading: Container(width: 40),

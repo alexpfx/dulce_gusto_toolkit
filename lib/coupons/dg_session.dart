@@ -7,11 +7,11 @@ import 'package:dulce_gusto_toolkit/coupons/user/user_credentials.dart';
 import 'package:html/parser.dart' as html;
 
 const baseUrl = 'https://www.nescafe-dolcegusto.com.br/m/';
-const accountLoginGet = baseUrl + 'customer/account/login';
+const kAccountLoginGet = baseUrl + 'customer/account/login';
 const accountLoginPost = baseUrl + 'customer/account/loginPost';
 const accountGet = baseUrl + 'customer/account';
 const myBonusGet = baseUrl + 'mybonus';
-const accountEditGet = baseUrl + 'customer/account/edit';
+const kAccountEditGet = baseUrl + 'customer/account/edit';
 const submitBonusPost = baseUrl + 'pcm/customer_account_bonus/couponPost/';
 const kLogoutGet = baseUrl + 'customer/account/logout/';
 const kLogoutSuccessGet = baseUrl + 'customer/account/logoutSuccess/';
@@ -59,20 +59,32 @@ class DolceGustoSession {
     }));
   }
 
-  Future<void> login() async {
-    await _login(_credentials.login, _credentials.password);
+  Stream<String> login() {
+    return _loginto(_credentials.login, _credentials.password);
   }
 
-  Future<void> _login(String username, String password) async {
+  Stream<String> _loginto(String username, String password) async* {
     _cookieJar.deleteAll();
-    log('tentando logar: $username $password');
+    yield 'tentando conectar';
+    var accountLoginGetResponse;
+    try {
+      accountLoginGetResponse = await dio.get(kAccountLoginGet);
+    } catch (e) {
+      yield 'verifique conexão';
+    }
 
-    final getResponse = await dio.get((accountLoginGet));
-
-    if (getResponse.statusCode == 200) {
-      final formKey = _parseFormKey(getResponse.data);
+    if (accountLoginGetResponse?.statusCode == 200) {
+      final formKey = _parseFormKey(accountLoginGetResponse.data);
+      yield 'enviando informações de login';
       await dio.post(accountLoginPost,
           data: loginFormData(username, password, formKey));
+      final r = await dio.get(baseUrl);
+      final errormessage = _getMessages(r.data);
+      if (errormessage == '') {
+        yield 'connection successfull';
+      } else {
+        yield errormessage;
+      }
     }
   }
 
@@ -80,6 +92,8 @@ class DolceGustoSession {
     await dio.get(kLogoutGet);
     _cookieJar.deleteAll();
   }
+
+
 
   Future<bool> get isLogged => _isLogged();
 
@@ -116,17 +130,12 @@ class DolceGustoSession {
     return Future.value(null);
   }
 
-  bool _isOk(Response response) {
-    return response.statusCode == 200;
-  }
-
   Future<String> _clientName() async {
-    if (!await isLogged) {
-      return Future.error("client is not logged in");
-    }
-    var response = await dio.get(accountEditGet);
-    if (_isOk(response)) {
-      var doc = html.parse(response.data);
+    var accountEditResponse = await dio.get(kAccountEditGet);
+
+    if (accountEditResponse.statusCode == 200) {
+      var doc = html.parse(accountEditResponse.data);
+
       var firstNameElement = doc.querySelector("div.field.name-firstname");
       var firstname = firstNameElement.querySelector("input[name=firstname]");
       var lastNameElement = doc.querySelector("div.field.name-lastname");

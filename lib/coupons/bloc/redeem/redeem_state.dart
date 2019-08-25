@@ -5,51 +5,24 @@ import 'package:meta/meta.dart';
 @immutable
 abstract class RedeemState extends Equatable {
   RedeemState([List props = const []]) : super(props);
-
-  EnumRedeemState get asEnum;
-
 }
 
-enum EnumRedeemState {
-  initial,
-  connecting,
-  fail,
-  succefull
-}
+enum EnumRedeemState { initial, connecting, fail, succefull }
 
-class InitialRedeemState extends RedeemState {
-  @override
-  // TODO: implement asEnum
-  EnumRedeemState get asEnum => EnumRedeemState.initial;
-}
+class InitialRedeemState extends RedeemState {}
 
-class ConnectingState extends RedeemState{
-  @override
-  // TODO: implement asEnum
-  EnumRedeemState get asEnum => EnumRedeemState.connecting;
+class ConnectingState extends RedeemState {}
 
-}
-
-class FailState extends RedeemState{
+class FailState extends RedeemState {
   final Coupon coupon;
   final String message;
-
 
   FailState(this.coupon, this.message);
-
-  @override
-  EnumRedeemState get asEnum => EnumRedeemState.fail;
-
 }
 
-class SuccessfulState extends RedeemState{
+class SuccessfulState extends RedeemState {
   final Coupon coupon;
   final String message;
-
-  @override
-  EnumRedeemState get asEnum => EnumRedeemState.succefull;
 
   SuccessfulState(this.coupon, this.message);
 }
-
-

@@ -1,35 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'bloc/user_info/get_user_info.dart';
 
 const message = "Not logged";
 
 class BonusStatusPanel extends StatelessWidget {
-  final String customerName;
-  final int points;
+//  final String clientName;
+//  final int points;
 
-
-  BonusStatusPanel({this.customerName, this.points});
+  BonusStatusPanel();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 100,
+    var bloc = BlocProvider.of<GetUserInfoBloc>(context);
 
-      width: double.infinity,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          _buildActionPanels(),
-          SizedBox(height: 8,),
-          _buildStatusPanel() ??
-              Center(child: Text(message),),
-
-        ],
-      ),
+    return BlocBuilder(
+      builder: _builder,
+      bloc: bloc,
     );
   }
 
-  _buildStatusPanel() {
-    if (customerName == null) {
+  _buildStatusPanel(String clientName, int points) {
+    if (clientName == null) {
       return null;
     }
 
@@ -39,7 +32,7 @@ class BonusStatusPanel extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.end,
         children: <Widget>[
           Text(
-            "$customerName",
+            "$clientName",
             textAlign: TextAlign.start,
           ),
           new SizedBox(
@@ -62,12 +55,42 @@ class BonusStatusPanel extends StatelessWidget {
           icon: Icon(Icons.camera),
           onPressed: () {},
         ),
-        Expanded(child: TextField(decoration: InputDecoration(hintText: 'Input your code'),)),
+        Expanded(
+            child: TextField(
+          decoration: InputDecoration(hintText: 'Input your code'),
+        )),
         IconButton(
           icon: Icon(Icons.check),
           onPressed: () {},
         )
       ],
     );
+  }
+
+  Widget _builder(BuildContext context, GetUserInfoState state) {
+    String clientName;
+    int points;
+    if (state is SuccessfulState){
+      clientName = state.clientName;
+      points = state.points;
+    }
+
+    return Container(
+        height: 100,
+        width: double.infinity,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            _buildActionPanels(),
+            SizedBox(
+              height: 8,
+            ),
+            _buildStatusPanel(clientName, points) ??
+                Center(
+                  child: Text(message),
+                ),
+          ],
+        ),
+      );
   }
 }

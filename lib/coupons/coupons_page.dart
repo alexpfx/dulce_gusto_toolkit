@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:dio/dio.dart';
 import 'package:dulce_gusto_toolkit/constants.dart';
 import 'package:dulce_gusto_toolkit/coupons/bonus_status_panel.dart';
 import 'package:dulce_gusto_toolkit/coupons/coupon.dart';
@@ -8,7 +9,11 @@ import 'package:dulce_gusto_toolkit/coupons/menu_constants.dart';
 import 'package:dulce_gusto_toolkit/coupons/preference_screen/dolce_gusto_preference_screen.dart';
 import 'package:dulce_gusto_toolkit/page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:dulce_gusto_toolkit/coupons/bloc/user_info/get_user_info.dart';
+import 'package:dulce_gusto_toolkit/coupons/dg_session.dart';
+import 'package:dulce_gusto_toolkit/coupons/user/user_credentials.dart';
 //import 'package:provider/provider.dart';
 
 /*
@@ -64,6 +69,10 @@ class _CouponPageState extends State<CouponPage> {
     _coupons.add(Coupon("ZAFA BTAA ABXP",
         dateAdded: DateTime.now(), status: Status.redeemed));
 
+    loadPreferences();
+
+
+
     super.initState();
   }
 
@@ -75,6 +84,11 @@ class _CouponPageState extends State<CouponPage> {
 
   @override
   Widget build(BuildContext context) {
+    var connectionBloc = BlocProvider.of<GetUserInfoBloc>(context);
+    connectionBloc.dispatch(GetUserInfoEventImpl(
+        new DolceGustoSession(Dio(), UserCredentials(_username, _pass))
+    ));
+
     return Page(
       title: 'My Coupons',
       body: _pageBuilder(context),
@@ -90,10 +104,7 @@ class _CouponPageState extends State<CouponPage> {
   _pageBuilder(context) => Container(
         child: Column(
           children: <Widget>[
-            BonusStatusPanel(
-              customerName: 'alexandre alessi',
-              points: 80,
-            ),
+            BonusStatusPanel(),
             Expanded(
               child: ListView.builder(
                 physics: ClampingScrollPhysics(),
