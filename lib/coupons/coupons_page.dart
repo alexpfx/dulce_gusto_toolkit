@@ -1,13 +1,18 @@
-import 'dart:math';
-
+import 'package:dulce_gusto_toolkit/constants.dart';
+import 'package:dulce_gusto_toolkit/coupons/add_code_widget.dart';
+import 'package:dulce_gusto_toolkit/coupons/bloc/user_info/get_user_info.dart';
+import 'package:dulce_gusto_toolkit/coupons/client_info_panel_widget.dart';
 import 'package:dulce_gusto_toolkit/coupons/coupon.dart';
 import 'package:dulce_gusto_toolkit/coupons/coupon_card/coupon_card.dart';
+import 'package:dulce_gusto_toolkit/coupons/coupon_card/redeem_status.dart';
 import 'package:dulce_gusto_toolkit/coupons/menu_constants.dart';
-import 'package:dulce_gusto_toolkit/coupons/preference_screen/dolce_gusto_preference_screen.dart';
-import 'package:dulce_gusto_toolkit/coupons/redeem_screen/redeem_screen.dart';
+import 'package:dulce_gusto_toolkit/coupons/preference_screen/credentials_settings_screen.dart';
+import 'package:dulce_gusto_toolkit/coupons/user/user_credentials.dart';
 import 'package:dulce_gusto_toolkit/page.dart';
+import 'package:dulce_gusto_toolkit/utils.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 //import 'package:provider/provider.dart';
 
 /*
@@ -27,46 +32,36 @@ class CouponPage extends StatefulWidget {
 
 class _CouponPageState extends State<CouponPage> {
   List<Coupon> _coupons = [];
+  Future _loadPreferencesFuture;
 
   final _controller = TextEditingController();
-
   final _formKey = GlobalKey<FormState>();
+  String _username;
+  String _pass;
 
   ScaffoldState scaffold;
 
+  bool get hasCredentials => _username != null && _username.isNotEmpty && _pass != null && _pass.isNotEmpty;
+
   @override
-  void initState() {
-    _coupons.add(Coupon("XSXS AAAA BBCD",
-        dateAdded: DateTime.now(), status: Status.added_new));
-    _coupons.add(Coupon("XNSX NSFN NNFA",
-        dateAdded: DateTime.now(), status: Status.added_new));
-    _coupons.add(Coupon("AAAA ZPTA ABDD",
-        dateAdded: DateTime.now(), status: Status.redeemed));
-    _coupons.add(Coupon("ZAFA BTAA ABXP",
-        dateAdded: DateTime.now(), status: Status.redeemed));
-
-    _coupons.add(Coupon("XSXS AAAA BBCD",
-        dateAdded: DateTime.now(), status: Status.added_new));
-    _coupons.add(Coupon("XNSX NSFN NNFA",
-        dateAdded: DateTime.now(), status: Status.added_new));
-    _coupons.add(Coupon("AAAA ZPTA ABDD",
-        dateAdded: DateTime.now(), status: Status.redeemed));
-    _coupons.add(Coupon("ZAFA BTAA ABXP",
-        dateAdded: DateTime.now(), status: Status.redeemed));
-    _coupons.add(Coupon("XSXS AAAA BBCD",
-        dateAdded: DateTime.now(), status: Status.added_new));
-    _coupons.add(Coupon("XNSX NSFN NNFA",
-        dateAdded: DateTime.now(), status: Status.added_new));
-    _coupons.add(Coupon("AAAA ZPTA ABDD",
-        dateAdded: DateTime.now(), status: Status.added_new));
-    _coupons.add(Coupon("ZAFA BTAA ABXP",
-        dateAdded: DateTime.now(), status: Status.redeemed));
-
+  initState() {
+    print('**************************************init state*************');
+    _loadPreferencesFuture = loadPreferences();
     super.initState();
+  }
+
+
+
+  Future<void> loadPreferences() async {
+      var sh = await SharedPreferences.getInstance();
+      _username = sh.getString(kDolceGustoLoginKey);
+      _pass = sh.getString(kDolceGustoPassKey);
   }
 
   @override
   Widget build(BuildContext context) {
+    getUserInfo(context);
+
     return Page(
       title: 'My Coupons',
       body: _pageBuilder(context),
@@ -76,124 +71,73 @@ class _CouponPageState extends State<CouponPage> {
           onSelected: _choiceAction,
         ),
       ],
-      fab: FloatingActionButton(
-        onPressed: () {
-          showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                    title: Text(
-                      'Input the dolce gusto promo code',
-                    ),
-                    content: Form(
-                      key: _formKey,
-                      child: TextFormField(
-                        validator: (value) {
-                          if (value
-                                  .replaceAll(new RegExp(r"\s\b|\b\s"), "")
-                                  .length !=
-                              12) {
-                            return "code must have 12 characters excluding whitespaces";
-                          }
-
-                          return null;
-                        },
-                        inputFormatters: [
-                          LengthLimitingTextInputFormatter(14),
-                          BlacklistingTextInputFormatter.singleLineFormatter,
-                        ],
-                        textInputAction: TextInputAction.none,
-                        controller: _controller,
-                        decoration: InputDecoration(hintText: 'code'),
-                      ),
-                    ),
-                    actions: <Widget>[
-                      FlatButton(
-                        child: Text('Cancel'),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                      RaisedButton(
-                        textTheme: Theme.of(context).buttonTheme.textTheme,
-                        child: Text('Confirm'),
-                        onPressed: () {
-                          if (_formKey.currentState.validate()) {
-                            setState(() {
-                              _coupons.insert(
-                                  0,
-                                  Coupon(
-                                      _controller.text
-                                          .replaceAll(
-                                              new RegExp(r"\s\b|\b\s"), "")
-                                          .toUpperCase(),
-                                      dateAdded: DateTime.now(),
-                                      status: Status.added_new));
-                            });
-                            Navigator.of(context).pop();
-                            _controller.clear();
-                          }
-                        },
-                      )
-                    ],
-                  ));
-        },
-        child: Icon(Icons.add),
-      ),
     );
   }
 
-  _pageBuilder(context) => Container(
-        child: Column(
-          children: <Widget>[
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  OutlineButton(
-                    child: Text('Limpar resgatados'),
-                    onPressed: () {},
+  Future getUserInfo(BuildContext context) async {
+    var connectionBloc = BlocProvider.of<GetUserInfoBloc>(context);
+    if (hasCredentials){
+      connectionBloc.dispatch(GetUserInfoEventImpl(_username, _pass));
+    }
+
+
+  }
+
+
+  _pageBuilder(context) {
+    return Container(
+        child: FutureBuilder(
+          future: _loadPreferencesFuture,
+          builder: (context, snapshot) => Center(
+            child: snapshot.connectionState == ConnectionState.done ? Column(
+              children: <Widget>[
+                AddCodeWidget(_onAddButtonPressed),
+                Expanded(
+                  child: ListView.builder(
+                    physics: ClampingScrollPhysics(),
+                    shrinkWrap: true,
+                    itemCount: _coupons.length,
+                    itemBuilder: _itemBuilder,
                   ),
-                  RaisedButton(
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              fullscreenDialog: true,
-                              settings: RouteSettings(),
-                              builder: (context) => RedeemScreen(
-                                    coupons: _coupons
-                                        .where(
-                                            (c) => c.status == Status.added_new)
-                                        .toList(),
-                                  )));
-                    },
-                    child: Text('Resgate'),
-                  )
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView.builder(
-                physics: ClampingScrollPhysics(),
-                shrinkWrap: true,
-                itemCount: _coupons.length,
-                itemBuilder: _itemBuilder,
-              ),
-            ),
-          ],
+                ),
+                ClientInfoPanelWidget(_onChangeCredentials, _onRefreshClientInfo),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      OutlineButton(
+                        child: Text('Limpar resgatados'),
+                        onPressed: () {},
+                      ),
+                      RaisedButton(
+                        onPressed: () {},
+                        child: Text('Resgatar Todos'),
+                      )
+                    ],
+                  ),
+                ),
+              ],
+            ): CircularProgressIndicator(),
+          ),
         ),
       );
+  }
 
-  Random r = Random();
 
   Widget _itemBuilder(BuildContext context, int index) {
     var coupon = _coupons[index];
     return CouponCard(
       coupon: coupon,
-      height: 56,
+      credentials: UserCredentials(_username, _pass),
+      height: 64,
       onCouponClick: (x) {},
+
     );
+  }
+
+  void onWillPop(){
+    _loadPreferencesFuture = loadPreferences();
   }
 
   _choiceAction(String action) {
@@ -201,30 +145,67 @@ class _CouponPageState extends State<CouponPage> {
       case "credentials":
         Navigator.push(
             context,
+
             MaterialPageRoute(
                 fullscreenDialog: true,
-                settings: RouteSettings(),
-                builder: (context) => DolceGustoCredentialsPreferenceScreen()));
+                settings: RouteSettings(
+
+                ),
+                builder: (context) => CredentialsSettingsScreen(
+                  callback: onWillPop
+                )));
         break;
       case "sort":
-        _coupons.sort(
-          (a, b) => (a.status == Status.added_new)
-              ? -1
-              : b.status == Status.added_new
-                  ? 1
-                  : a.status.hashCode.compareTo(b.status.hashCode),
-        );
-        setState(() {});
+        setState(() {
+          _sortList();
+        });
         break;
     }
   }
 
+  void _sortList() {
+    _coupons.sort(
+      (a, b) => (a.status == Status.added_new)
+          ? -1
+          : b.status == Status.added_new
+              ? 1
+              : a.status.hashCode.compareTo(b.status.hashCode),
+    );
+  }
+
   List<PopupMenuEntry<String>> _menuItemBuilder(BuildContext context) {
     return [
-      kBuildMenuItem(Icons.verified_user, "Dc Credentials", "credentials"),
-      kBuildMenuItem(Icons.sort, "Sort", "sort")
+      kBuildMenuItem(Icons.sort, "Sort", "sort"),
+      kBuildMenuItem(Icons.verified_user, 'Credentials', 'credentials')
     ];
   }
+
+  void _onChangeCredentials() {
+    print('onChangeCredentials');
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            fullscreenDialog: true,
+            settings: RouteSettings(),
+            builder: (context) => CredentialsSettingsScreen()));
+  }
+
+  void _onRefreshClientInfo() {
+    getUserInfo(context);
+  }
+
+  _onAddButtonPressed(String code) {
+    setState(() {
+      _coupons.add(Coupon(code: code,
+          dateAdded: DateTime.now(),
+          status: Status.redeemed,
+          redeemAttempt: RedeemAttempt(
+              status: RedeemResultStatus.newBonus,
+              message: "")));
+    });
+  }
+
+
 }
 
 class SectionTitle extends StatelessWidget {

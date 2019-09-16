@@ -1,10 +1,20 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
+
+
+
+enum RedeemResultStatus {
+  newBonus,
+  redeemingInProgress,
+  info_ok,
+  info_fail
+}
+
+/*
 class CouponCodeCard extends StatelessWidget {
   final String coupon;
+  final RedeemResultStatus status;
 
-  CouponCodeCard(this.coupon);
+  CouponCodeCard(this.coupon, this.status);
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +29,12 @@ class CouponCodeCard extends StatelessWidget {
             children: <Widget>[
               Row(
                 children: <Widget>[
+                  RedeemResultStatusWidget(result: RedeemEvent(
+                    status: RedeemResultStatus.info_ok,
+                    code: 'xxxs ssfa pala',
+                    message: 'Cupom resgatado com sucesso. Mais 10 pontos na sua conta.'
+
+                  )),
                   InkWell(
                     child: Text(
                       coupon,
@@ -42,4 +58,10 @@ class CouponCodeCard extends StatelessWidget {
           Expanded(child: SizedBox()),
         ]);
   }
+
+
 }
+
+
+
+*/

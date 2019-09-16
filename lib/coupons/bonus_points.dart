@@ -15,10 +15,6 @@ class BonusPointsParser {
       var bonusBox = doc.querySelector('.box.info-box.bonus-number-box');
       var digits = bonusBox.querySelectorAll('.digit');
       return _extractDigits(digits);
-    } else {
-      print(r.statusMessage);
-      print(r.statusCode);
-      print(r.extra);
     }
     return null;
   }

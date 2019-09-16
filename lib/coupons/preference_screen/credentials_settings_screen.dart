@@ -1,16 +1,26 @@
+import 'package:dio/dio.dart';
+import 'package:dio/dio.dart' as prefix0;
 import 'package:dulce_gusto_toolkit/constants.dart';
+import 'package:dulce_gusto_toolkit/coupons/bloc/connection/conn.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' as prefix1;
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class DolceGustoCredentialsPreferenceScreen extends StatefulWidget {
+class CredentialsSettingsScreen extends StatefulWidget {
+
+  final VoidCallback callback;
+
+  CredentialsSettingsScreen({this.callback});
+
   @override
-  _DolceGustoCredentialsPreferenceScreenState createState() =>
-      _DolceGustoCredentialsPreferenceScreenState();
+  _CredentialsSettingsScreenState createState() =>
+      _CredentialsSettingsScreenState();
 }
 
-class _DolceGustoCredentialsPreferenceScreenState
-    extends State<DolceGustoCredentialsPreferenceScreen> {
+class _CredentialsSettingsScreenState
+    extends State<CredentialsSettingsScreen> {
   Future<SharedPreferences> _sharedPreferences =
       SharedPreferences.getInstance();
 
@@ -18,18 +28,34 @@ class _DolceGustoCredentialsPreferenceScreenState
   TextEditingController _passController = TextEditingController();
 
   bool _isObscurePassword = true;
+  String _user;
+  String _pass;
+
+  _onCheckConnectionClick() {
+    var connectionBloc = BlocProvider.of<ConnectionBloc>(context);
+    connectionBloc.dispatch(
+        LoginDgEvent(_user, _pass)
+    );
+  }
 
   @override
   initState() {
-    loadPreferences();
-
     super.initState();
+    _emailController.addListener(() {
+      _user = _emailController.text;
+    });
+    _passController.addListener(() {
+      _pass = _passController.text;
+    });
+    loadPreferences();
   }
 
   Future<bool> loadPreferences() async {
     var sp = await _sharedPreferences;
+
     _emailController.text = sp.getString(kDolceGustoLoginKey);
     _passController.text = sp.getString(kDolceGustoPassKey);
+    print('load preferences');
     return true;
   }
 
@@ -64,7 +90,6 @@ class _DolceGustoCredentialsPreferenceScreenState
               ListTile(
                 title: TextField(
                   controller: _passController,
-                  onChanged: _onPassChanged,
                   obscureText: _isObscurePassword,
                   decoration: InputDecoration(
                     hintText: 'Password',
@@ -84,6 +109,7 @@ class _DolceGustoCredentialsPreferenceScreenState
                       });
                     }),
               ),
+              new CheckCredentials(_onCheckConnectionClick)
             ],
           ),
         ),
@@ -99,8 +125,6 @@ class _DolceGustoCredentialsPreferenceScreenState
     super.dispose();
   }
 
-  void _onPassChanged(String value) {}
-
   Future<bool> _onWillPop() async {
     var sp = await _sharedPreferences;
     var email = _emailController.text;
@@ -109,6 +133,63 @@ class _DolceGustoCredentialsPreferenceScreenState
     sp.setString(kDolceGustoLoginKey, email);
     sp.setString(kDolceGustoPassKey, pass);
 
+
+    widget.callback?.call();
+
+//    if (widget.callback != null) widget.callback();
     return true;
+  }
+}
+
+// todo este nome está ruim
+class CheckCredentials extends StatelessWidget {
+  final VoidCallback onCheckConnection;
+
+  CheckCredentials(this.onCheckConnection);
+
+  @override
+  Widget build(BuildContext context) {
+    var connectionBloc = BlocProvider.of<ConnectionBloc>(context);
+    print('CheckCredentials');
+    return BlocBuilder(
+      bloc: connectionBloc,
+      builder: (BuildContext context, state) => _build(context, state),
+    );
+  }
+
+  _build(BuildContext context, ConnState state) {
+    String status;
+    TextStyle style = TextStyle(fontSize: 14);
+
+    if (state is InitialState) {
+      status = 'check connection';
+      style = style.copyWith(color: Colors.white);
+    }
+    if (state is MessageSend) {
+      print('message: ${state.message}');
+      status = state.message;
+      style = style.copyWith(color: Colors.yellow);
+    }
+
+    if (state is ConnectionSuccessState) {
+      status = 'successful connect';
+      style = style.copyWith(color: Colors.green);
+    }
+    if (state is CouldNotConnect) {
+      status = 'could not connect';
+      style = style.copyWith(color: Colors.red);
+    }
+
+    print('status: $status');
+    return ListTile(
+      trailing: Container(width: 40),
+      leading: Container(width: 40),
+      title: MaterialButton(
+          onPressed: onCheckConnection,
+          child: Text(
+            status,
+            style: style,
+          )),
+    );
   }
 }
