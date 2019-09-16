@@ -19,9 +19,7 @@ class RedeemBloc extends Bloc<RedeemEvent, RedeemState> {
   bool _logged = false;
 
   @override
-  Stream<RedeemState> mapEventToState(
-    RedeemEvent event,
-  ) async* {
+  Stream<RedeemState> mapEventToState(RedeemEvent event) async* {
     if (event is RedeemCodeEvent) {
       yield LoadingState();
 
@@ -43,12 +41,11 @@ class RedeemBloc extends Bloc<RedeemEvent, RedeemState> {
       yield message;
 
       update(coupon, message);
-
     }
-
   }
 
-  Future<ResultMessageState> getResultMessage(DolceGustoSession session, Coupon coupon) async {
+  Future<ResultMessageState> getResultMessage(
+      DolceGustoSession session, Coupon coupon) async {
     if (_logged) {
       var message = await session.storeBonus(coupon.code);
       if (message != null) {
@@ -63,8 +60,9 @@ class RedeemBloc extends Bloc<RedeemEvent, RedeemState> {
     }
   }
 
-  update(Coupon coupon, ResultMessageState message) async {
+  update(Coupon coupon, ResultMessageState message) async* {
     await dbHelper.updateBonus(coupon.copyWith());
+    yield CompletedState(message.message, coupon);
   }
 
   RedeemState getStateByMessage(String message, String code) {

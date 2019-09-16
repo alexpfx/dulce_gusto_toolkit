@@ -1,3 +1,4 @@
+import 'package:dulce_gusto_toolkit/coupons/coupon.dart';
 import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 
@@ -12,7 +13,7 @@ class LoadingState extends RedeemState {}
 
 class CompletedState extends RedeemState {
   final String message;
-  final String code;
+  final Coupon code;
 
   CompletedState(this.message, this.code);
 }
