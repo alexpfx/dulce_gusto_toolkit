@@ -8,9 +8,10 @@ abstract class GetUserInfoEvent extends Equatable {
 }
 
 class GetUserInfoEventImpl extends GetUserInfoEvent{
-  final DolceGustoSession session;
+  final String username;
+  final String password;
 
-  GetUserInfoEventImpl(this.session): super([session]);
+  GetUserInfoEventImpl(this.username, this.password): super([username, password]);
 
 
 }

@@ -1,21 +1,26 @@
 import 'package:dio/dio.dart';
+import 'package:dio/dio.dart' as prefix0;
 import 'package:dulce_gusto_toolkit/constants.dart';
 import 'package:dulce_gusto_toolkit/coupons/bloc/connection/conn.dart';
-import 'package:dulce_gusto_toolkit/coupons/dg_session.dart';
-import 'package:dulce_gusto_toolkit/coupons/user/user_credentials.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' as prefix1;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class DolceGustoCredentialsPreferenceScreen extends StatefulWidget {
+class CredentialsSettingsScreen extends StatefulWidget {
+
+  final VoidCallback callback;
+
+  CredentialsSettingsScreen({this.callback});
+
   @override
-  _DolceGustoCredentialsPreferenceScreenState createState() =>
-      _DolceGustoCredentialsPreferenceScreenState();
+  _CredentialsSettingsScreenState createState() =>
+      _CredentialsSettingsScreenState();
 }
 
-class _DolceGustoCredentialsPreferenceScreenState
-    extends State<DolceGustoCredentialsPreferenceScreen> {
+class _CredentialsSettingsScreenState
+    extends State<CredentialsSettingsScreen> {
   Future<SharedPreferences> _sharedPreferences =
       SharedPreferences.getInstance();
 
@@ -29,7 +34,8 @@ class _DolceGustoCredentialsPreferenceScreenState
   _onCheckConnectionClick() {
     var connectionBloc = BlocProvider.of<ConnectionBloc>(context);
     connectionBloc.dispatch(
-        LoginDgEvent(DolceGustoSession(Dio(), UserCredentials(_user, _pass))));
+        LoginDgEvent(_user, _pass)
+    );
   }
 
   @override
@@ -46,8 +52,10 @@ class _DolceGustoCredentialsPreferenceScreenState
 
   Future<bool> loadPreferences() async {
     var sp = await _sharedPreferences;
+
     _emailController.text = sp.getString(kDolceGustoLoginKey);
     _passController.text = sp.getString(kDolceGustoPassKey);
+    print('load preferences');
     return true;
   }
 
@@ -125,10 +133,15 @@ class _DolceGustoCredentialsPreferenceScreenState
     sp.setString(kDolceGustoLoginKey, email);
     sp.setString(kDolceGustoPassKey, pass);
 
+
+    widget.callback?.call();
+
+//    if (widget.callback != null) widget.callback();
     return true;
   }
 }
 
+// todo este nome está ruim
 class CheckCredentials extends StatelessWidget {
   final VoidCallback onCheckConnection;
 

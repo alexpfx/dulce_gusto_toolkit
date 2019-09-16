@@ -25,10 +25,12 @@ dependencies:
   http: ^0.12.0+2
   html: ^0.14.0+2
   path_provider: ^1.1.0
+  sqflite: ^1.1.6
   equatable: ^0.3.0
   flutter_bloc: ^0.20.0
   shared_preferences: ^0.5.3+1
   font_awesome_flutter: ^8.4.0
+  mask_text_input_formatter: ^1.0.2
 #  provider: ^3.0.0+1
   dio: ^2.1.13
   cookie_jar: ^1.0.1

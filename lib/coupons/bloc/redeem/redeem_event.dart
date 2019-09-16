@@ -10,8 +10,10 @@ abstract class RedeemEvent extends Equatable {
 }
 
 class RedeemCodeEvent extends RedeemEvent{
-  final DolceGustoSession session;
   final Coupon coupon;
+  final String user;
+  final String pass;
 
-  RedeemCodeEvent({this.session, this.coupon}): super([session, coupon]);
+
+  RedeemCodeEvent({this.user, this.pass, this.coupon}): super([user, pass, coupon]);
 }

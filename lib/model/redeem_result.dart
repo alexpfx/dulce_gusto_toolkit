@@ -1,4 +1,4 @@
-import 'package:dulce_gusto_toolkit/coupons/coupon_card/coupon_code_card.dart';
+import 'package:dulce_gusto_toolkit/coupons/coupon_card/redeem_status.dart';
 
 class RedeemEvent{
   final RedeemResultStatus status;

@@ -1,5 +1,10 @@
 import 'package:dulce_gusto_toolkit/model/page_summary.dart';
 import 'package:flutter/material.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+
+
+//final kCodeMaskFormat = new MaskTextInputFormatter(mask: '####-####-####', filter: {'#': kRegExpOnlyLetters});
+
 
 //const TextStyle kCupomCodeTextStyle = TextStyle(
 //    color: kPrimaryTextColor,

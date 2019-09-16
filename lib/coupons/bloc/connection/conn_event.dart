@@ -9,7 +9,8 @@ abstract class ConnectionEvent extends Equatable {
 }
 
 class LoginDgEvent extends ConnectionEvent {
-  final DolceGustoSession session;
+  final String username;
+  final String password;
 
-  LoginDgEvent(this.session) : super([session]);
+  LoginDgEvent(this.username, this.password) : super([username, password]);
 }

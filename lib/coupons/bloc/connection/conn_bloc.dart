@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
+import 'package:dio/dio.dart';
 import 'package:dulce_gusto_toolkit/coupons/bloc/connection/conn_event.dart';
 import 'package:dulce_gusto_toolkit/coupons/bloc/connection/conn_state.dart';
+import 'package:dulce_gusto_toolkit/coupons/dg_session.dart';
 
 class ConnectionBloc extends Bloc<ConnectionEvent, ConnState> {
   ConnectionBloc();
@@ -14,9 +16,10 @@ class ConnectionBloc extends Bloc<ConnectionEvent, ConnState> {
   Stream<ConnState> mapEventToState(ConnectionEvent event) async* {
     if (event is LoginDgEvent) {
       try {
-        var session = event.session;
+        var session = DolceGustoSession(dioHolder:DioHolder(Dio()));
 
-        await for (final message in session.login()){
+        await for (final message
+            in session.login(event.username, event.password)) {
           yield new MessageSend(await message);
         }
 

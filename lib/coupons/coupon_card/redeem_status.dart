@@ -1,7 +1,4 @@
-import 'package:dulce_gusto_toolkit/coupons/coupon_card/redeem/redeem_result_status_widget.dart';
-import 'package:dulce_gusto_toolkit/model/redeem_result.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+
 
 
 
@@ -12,6 +9,7 @@ enum RedeemResultStatus {
   info_fail
 }
 
+/*
 class CouponCodeCard extends StatelessWidget {
   final String coupon;
   final RedeemResultStatus status;
@@ -66,3 +64,4 @@ class CouponCodeCard extends StatelessWidget {
 
 
 
+*/

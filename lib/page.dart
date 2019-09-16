@@ -19,6 +19,8 @@ class Page extends StatelessWidget {
       drawer: DrawerMenu(),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: fab,
+      resizeToAvoidBottomPadding: true,
+
       body: body,
     );
   }

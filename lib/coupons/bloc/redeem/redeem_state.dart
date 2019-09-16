@@ -1,4 +1,3 @@
-import 'package:dulce_gusto_toolkit/coupons/coupon.dart';
 import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 
@@ -7,22 +6,21 @@ abstract class RedeemState extends Equatable {
   RedeemState([List props = const []]) : super(props);
 }
 
-enum EnumRedeemState { initial, connecting, fail, succefull }
-
 class InitialRedeemState extends RedeemState {}
 
-class ConnectingState extends RedeemState {}
+class LoadingState extends RedeemState {}
 
-class FailState extends RedeemState {
-  final Coupon coupon;
+class CompletedState extends RedeemState {
   final String message;
+  final String code;
 
-  FailState(this.coupon, this.message);
+  CompletedState(this.message, this.code);
 }
 
-class SuccessfulState extends RedeemState {
-  final Coupon coupon;
+class ResultMessageState extends RedeemState {
   final String message;
+  final String code;
+  final bool hasError;
 
-  SuccessfulState(this.coupon, this.message);
+  ResultMessageState(this.message, this.code, {this.hasError: false});
 }
