@@ -15,7 +15,7 @@ class CompletedState extends RedeemState {
   final String message;
   final Coupon code;
 
-  CompletedState(this.message, this.code);
+  CompletedState(this.message, this.code) : super([message, code]);
 }
 
 class ResultMessageState extends RedeemState {
@@ -23,5 +23,6 @@ class ResultMessageState extends RedeemState {
   final String code;
   final bool hasError;
 
-  ResultMessageState(this.message, this.code, {this.hasError: false});
+  ResultMessageState(this.message, this.code, {this.hasError: false})
+      : super([message, code, hasError]);
 }

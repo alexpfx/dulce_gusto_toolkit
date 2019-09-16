@@ -8,7 +8,6 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:synchronized/synchronized.dart';
 
-
 final DbHelper dbHelper = new DbHelper._private();
 
 class DbHelper {
@@ -18,7 +17,6 @@ class DbHelper {
 
   DbHelper._private();
 
-
   _initialize() async {
     _databasePath = await getDatabasesPath();
     try {
@@ -26,16 +24,15 @@ class DbHelper {
     } catch (_) {}
   }
 
-
   Future<Database> _open() async {
-    if (_database != null){
+    if (_database != null) {
       return _database;
     }
 
     await _initialize();
 
     await _lock.synchronized(() async {
-      if (_database == null){
+      if (_database == null) {
         _database = await _openDb();
       }
     });
@@ -65,11 +62,11 @@ class DbHelper {
     return coupon.copyWith(id: id);
   }
 
-  Future<void> updateBonus(Coupon bonus) async{
+  Future<void> updateBonus(Coupon bonus) async {
     var db = await _openDb();
-    await db.update(Coupon.tableName, bonus.toMap(), where: 'id = ?', whereArgs: [bonus.id]);
+    await db.update(Coupon.tableName, bonus.toMap(),
+        where: 'id = ?', whereArgs: [bonus.id]);
   }
-
 
   Future<List<Coupon>> allBonus() async {
     var maps = await _database.query(Coupon.tableName);
@@ -79,4 +76,10 @@ class DbHelper {
     });
   }
 
+  Future<Coupon> theBonus(int id) async {
+    var map = (await _database.query(Coupon.tableName,
+            distinct: true, where: 'id = ?', whereArgs: [id]))
+        .first;
+    return Coupon.fromMap(map);
+  }
 }
