@@ -1,5 +1,8 @@
 import 'package:dulce_gusto_toolkit/colors.dart';
+import 'package:dulce_gusto_toolkit/coupons/bloc/synchronize_coupons/synchronize_bonus.dart';
+import 'package:dulce_gusto_toolkit/coupons/infra/bonus_bloc_listeners.dart';
 import 'package:dulce_gusto_toolkit/coupons/coupons_page.dart';
+import 'package:dulce_gusto_toolkit/coupons/infra/bonus_bloc_providers.dart';
 import 'package:dulce_gusto_toolkit/drawer_menu.dart';
 import 'package:dulce_gusto_toolkit/flavors/flavors_page.dart';
 import 'package:dulce_gusto_toolkit/model/data/database_helper.dart';
@@ -17,30 +20,19 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
-
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider<ConnectionBloc>(
-          builder: (context) => ConnectionBloc(),
+    return BonusBlocProviders( // mover para baixo de routes
+      child: BonusBlocListeners(
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'Flutter Demo',
+          routes: {
+            '/': (context) => CouponPage(),
+            '/timer': (context) => TimerPage(),
+            '/flavors': (context) => FlavorsPage(),
+            '/coupons': (context) => CouponPage()
+          },
+          theme: ThemeData.dark().copyWith(cardColor: kCardColor),
         ),
-        BlocProvider<RedeemBloc>(
-          builder: (context) => RedeemBloc(dbHelper),
-        ),
-        BlocProvider<GetUserInfoBloc>(
-          builder: (context) => GetUserInfoBloc(),
-        ),
-      ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'Flutter Demo',
-        routes: {
-          '/': (context) => CouponPage(),
-          '/timer': (context) => TimerPage(),
-          '/flavors': (context) => FlavorsPage(),
-          '/coupons': (context) => CouponPage()
-        },
-        theme: ThemeData.dark().copyWith(cardColor: kCardColor),
       ),
     );
   }

@@ -1,9 +1,7 @@
 import 'package:dio/dio.dart';
-import 'package:dio/dio.dart' as prefix0;
 import 'package:dulce_gusto_toolkit/constants.dart';
 import 'package:dulce_gusto_toolkit/coupons/bloc/connection/conn.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/material.dart' as prefix1;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class CredentialsSettingsScreen extends StatefulWidget {
 
   final VoidCallback callback;
+
 
   CredentialsSettingsScreen({this.callback});
 

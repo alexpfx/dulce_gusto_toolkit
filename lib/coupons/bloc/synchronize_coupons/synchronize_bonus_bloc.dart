@@ -1,9 +1,11 @@
 import 'dart:async';
-import 'package:bloc/bloc.dart';
-import 'package:dulce_gusto_toolkit/model/data/database_helper.dart';
-import './synchronize_bonus.dart';
 
-class SynchronizeBonusBloc extends Bloc<SynchronizeBonusEvent, SynchronizeBonusState> {
+import 'package:bloc/bloc.dart';
+import 'package:dulce_gusto_toolkit/coupons/bloc/synchronize_coupons/synchronize_bonus.dart';
+import 'package:dulce_gusto_toolkit/model/data/database_helper.dart';
+
+class SynchronizeBonusBloc
+    extends Bloc<SynchronizeBonusEvent, SynchronizeBonusState> {
   @override
   SynchronizeBonusState get initialState => InitialSynchronizeBonusState();
 
@@ -11,14 +13,27 @@ class SynchronizeBonusBloc extends Bloc<SynchronizeBonusEvent, SynchronizeBonusS
   Stream<SynchronizeBonusState> mapEventToState(
     SynchronizeBonusEvent event,
   ) async* {
-
-    if (event is SynchronizeOneBonus){
+    if (event is GetBonus) {
       var bonus = await dbHelper.theBonus(event.coupon.id);
-
-      yield BonusWasUpdatedState(bonus);
-      //TODO ver como tratar erro.
-
+      yield GetBonusState(bonus);
     }
 
+    if (event is GetAllBonus) {
+      var bonusList = await dbHelper.allBonus();
+      yield AllBonusState(bonusList);
+    }
+
+    if (event is UpdateEvent) {
+      dbHelper.saveOrUpdateBonus(event.bonus);
+      yield BonusWasUpdated(event.bonus);
+    }
+
+    if (event is StoreBonus) {
+      int id = await dbHelper.saveOrUpdateBonus(event.bonus);
+      var all = await dbHelper.allBonus();
+      print(all);
+
+      yield BonusWasStored(event.bonus.copyWith(id: id));
+    }
   }
 }

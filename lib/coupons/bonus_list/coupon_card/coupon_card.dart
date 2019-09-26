@@ -1,12 +1,15 @@
 import 'dart:math' as math;
-import 'package:flutter/foundation.dart';
+
 import 'package:dulce_gusto_toolkit/coupons/bloc/redeem/redeem.dart';
+import 'package:dulce_gusto_toolkit/coupons/bloc/synchronize_coupons/synchronize_bonus.dart';
+import 'package:dulce_gusto_toolkit/coupons/bonus_list/coupon_card/coupon_card_leading.dart';
+import 'package:dulce_gusto_toolkit/coupons/bonus_list/coupon_card/coupon_card_title.dart';
+import 'package:dulce_gusto_toolkit/coupons/bonus_list/coupon_card/coupon_card_trailing.dart';
+import 'package:dulce_gusto_toolkit/coupons/bonus_list/coupon_card/redeem_status.dart';
 import 'package:dulce_gusto_toolkit/coupons/coupon.dart';
-import 'package:dulce_gusto_toolkit/coupons/coupon_card/coupon_card_leading.dart';
-import 'package:dulce_gusto_toolkit/coupons/coupon_card/coupon_card_title.dart';
-import 'package:dulce_gusto_toolkit/coupons/coupon_card/coupon_card_trailing.dart';
-import 'package:dulce_gusto_toolkit/coupons/coupon_card/redeem_status.dart';
+import 'package:dulce_gusto_toolkit/coupons/preference_screen/credentials_settings_screen.dart';
 import 'package:dulce_gusto_toolkit/coupons/user/user_credentials.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -34,17 +37,28 @@ class CouponCard extends StatelessWidget {
         child: Card(
           elevation: 2,
           margin: EdgeInsets.all(1),
-          child: BlocBuilder<RedeemBloc, RedeemState>(
-              bloc: bloc,
-              condition: (RedeemState oldState, RedeemState state) {
-                return !(state is InitialRedeemState);
+          child: BlocBuilder<SynchronizeBonusBloc, SynchronizeBonusState>(
+              bloc: BlocProvider.of<SynchronizeBonusBloc>(context),
+              condition: (prevState, actualState) {
+                return actualState is BonusWasUpdated;
               },
-              builder: (BuildContext context, RedeemState state) =>
-                  buildByState(context, state)),
+              builder: (context, state) {
+                return buildByState(context, state);
+              }),
         ));
   }
 
   void _onDownloadPress(BuildContext context) {
+    if (!hasCredentials) {
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              fullscreenDialog: true,
+              settings: RouteSettings(),
+              builder: (context) => CredentialsSettingsScreen()));
+      return;
+    }
+
     var redeeBloc = BlocProvider.of<RedeemBloc>(context);
 
     redeeBloc.dispatch(RedeemCodeEvent(
@@ -57,9 +71,10 @@ class CouponCard extends StatelessWidget {
   bool get hasCredentials => ((credentials?.login?.isNotEmpty ?? false) &&
       (credentials?.password?.isNotEmpty ?? false));
 
-  buildByState(BuildContext context, RedeemState state) {
+  buildByState(BuildContext context, SynchronizeBonusState state) {
     RedeemResultStatus status;
     debugPrint("buildByState: $state");
+
 
 
     return ListTile(
@@ -71,14 +86,11 @@ class CouponCard extends StatelessWidget {
       ),
       title: CouponCardTitle(coupon: coupon),
       trailing: CouponCardTrailing(
-        onPressCallback:
-            (isOnPressEnabled(status)) ? () => _onDownloadPress(context) : null, state: state,
+        onPressCallback: () => _onDownloadPress(context),
+        state: state,
       ),
     );
   }
-
-  bool isOnPressEnabled(RedeemResultStatus status) =>
-      hasCredentials && status != RedeemResultStatus.info_ok;
 
   void _onStatusButtonTap(context, Coupon coupon) {
     final scaffold = Scaffold.of(context, nullOk: true);

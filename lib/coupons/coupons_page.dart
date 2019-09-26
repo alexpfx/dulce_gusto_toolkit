@@ -1,15 +1,15 @@
 import 'package:dulce_gusto_toolkit/constants.dart';
 import 'package:dulce_gusto_toolkit/coupons/add_code_widget.dart';
+import 'package:dulce_gusto_toolkit/coupons/bloc/synchronize_coupons/synchronize_bonus.dart';
 import 'package:dulce_gusto_toolkit/coupons/bloc/user_info/get_user_info.dart';
+import 'package:dulce_gusto_toolkit/coupons/bonus_list/bonus_list.dart';
 import 'package:dulce_gusto_toolkit/coupons/client_info_panel_widget.dart';
 import 'package:dulce_gusto_toolkit/coupons/coupon.dart';
-import 'package:dulce_gusto_toolkit/coupons/coupon_card/coupon_card.dart';
-import 'package:dulce_gusto_toolkit/coupons/coupon_card/redeem_status.dart';
+import 'package:dulce_gusto_toolkit/coupons/bonus_list/coupon_card/redeem_status.dart';
 import 'package:dulce_gusto_toolkit/coupons/menu_constants.dart';
 import 'package:dulce_gusto_toolkit/coupons/preference_screen/credentials_settings_screen.dart';
 import 'package:dulce_gusto_toolkit/coupons/user/user_credentials.dart';
 import 'package:dulce_gusto_toolkit/page.dart';
-import 'package:dulce_gusto_toolkit/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -31,8 +31,9 @@ class CouponPage extends StatefulWidget {
 }
 
 class _CouponPageState extends State<CouponPage> {
-  List<Coupon> _coupons = [];
   Future _loadPreferencesFuture;
+
+  GetUserInfoBloc connBloc;
 
   final _controller = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -41,26 +42,38 @@ class _CouponPageState extends State<CouponPage> {
 
   ScaffoldState scaffold;
 
-  bool get hasCredentials => _username != null && _username.isNotEmpty && _pass != null && _pass.isNotEmpty;
+  bool get hasCredentials =>
+      _username != null &&
+      _username.isNotEmpty &&
+      _pass != null &&
+      _pass.isNotEmpty;
 
   @override
   initState() {
-    print('**************************************init state*************');
     _loadPreferencesFuture = loadPreferences();
     super.initState();
   }
 
-
+  @override
+  dispose() {
+//    syncBloc.dispose();
+//    connBloc.dispose();
+    super.dispose();
+  }
 
   Future<void> loadPreferences() async {
-      var sh = await SharedPreferences.getInstance();
-      _username = sh.getString(kDolceGustoLoginKey);
-      _pass = sh.getString(kDolceGustoPassKey);
+    var sh = await SharedPreferences.getInstance();
+    _username = sh.getString(kDolceGustoLoginKey);
+    _pass = sh.getString(kDolceGustoPassKey);
   }
 
   @override
   Widget build(BuildContext context) {
+    connBloc = BlocProvider.of<GetUserInfoBloc>(context);
+
     getUserInfo(context);
+
+
 
     return Page(
       title: 'My Coupons',
@@ -75,68 +88,50 @@ class _CouponPageState extends State<CouponPage> {
   }
 
   Future getUserInfo(BuildContext context) async {
-    var connectionBloc = BlocProvider.of<GetUserInfoBloc>(context);
-    if (hasCredentials){
-      connectionBloc.dispatch(GetUserInfoEventImpl(_username, _pass));
+    if (hasCredentials) {
+      connBloc.dispatch(GetUserInfoEventImpl(_username, _pass));
     }
-
-
   }
-
 
   _pageBuilder(context) {
     return Container(
-        child: FutureBuilder(
-          future: _loadPreferencesFuture,
-          builder: (context, snapshot) => Center(
-            child: snapshot.connectionState == ConnectionState.done ? Column(
-              children: <Widget>[
-                AddCodeWidget(_onAddButtonPressed),
-                Expanded(
-                  child: ListView.builder(
-                    physics: ClampingScrollPhysics(),
-                    shrinkWrap: true,
-                    itemCount: _coupons.length,
-                    itemBuilder: _itemBuilder,
-                  ),
-                ),
-                ClientInfoPanelWidget(_onChangeCredentials, _onRefreshClientInfo),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      OutlineButton(
-                        child: Text('Limpar resgatados'),
-                        onPressed: () {},
+      child: FutureBuilder(
+        future: _loadPreferencesFuture,
+        builder: (context, snapshot) => Center(
+          child: snapshot.connectionState == ConnectionState.done
+              ? Column(
+                  children: <Widget>[
+                    AddCodeWidget(_onAddButtonPressed),
+                    Expanded(
+                      child: BonusList(UserCredentials(_username, _pass)),
+                    ),
+                    ClientInfoPanelWidget(
+                        _onChangeCredentials, _onRefreshClientInfo),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          OutlineButton(
+                            child: Text('Limpar resgatados'),
+                            onPressed: () {},
+                          ),
+                          RaisedButton(
+                            onPressed: () {},
+                            child: Text('Resgatar Todos'),
+                          )
+                        ],
                       ),
-                      RaisedButton(
-                        onPressed: () {},
-                        child: Text('Resgatar Todos'),
-                      )
-                    ],
-                  ),
-                ),
-              ],
-            ): CircularProgressIndicator(),
-          ),
+                    ),
+                  ],
+                )
+              : CircularProgressIndicator(),
         ),
-      );
-  }
-
-
-  Widget _itemBuilder(BuildContext context, int index) {
-    var coupon = _coupons[index];
-    return CouponCard(
-      coupon: coupon,
-      credentials: UserCredentials(_username, _pass),
-      height: 64,
-      onCouponClick: (x) {},
-
+      ),
     );
   }
 
-  void onWillPop(){
+  void onWillPop() {
     _loadPreferencesFuture = loadPreferences();
   }
 
@@ -145,15 +140,11 @@ class _CouponPageState extends State<CouponPage> {
       case "credentials":
         Navigator.push(
             context,
-
             MaterialPageRoute(
                 fullscreenDialog: true,
-                settings: RouteSettings(
-
-                ),
-                builder: (context) => CredentialsSettingsScreen(
-                  callback: onWillPop
-                )));
+                settings: RouteSettings(),
+                builder: (context) =>
+                    CredentialsSettingsScreen(callback: onWillPop)));
         break;
       case "sort":
         setState(() {
@@ -164,13 +155,13 @@ class _CouponPageState extends State<CouponPage> {
   }
 
   void _sortList() {
-    _coupons.sort(
-      (a, b) => (a.status == Status.added_new)
+/*    _coupons.sort(
+          (a, b) => (a.status == Status.added_new)
           ? -1
           : b.status == Status.added_new
-              ? 1
-              : a.status.hashCode.compareTo(b.status.hashCode),
-    );
+          ? 1
+          : a.status.hashCode.compareTo(b.status.hashCode),
+    );*/
   }
 
   List<PopupMenuEntry<String>> _menuItemBuilder(BuildContext context) {
@@ -195,17 +186,18 @@ class _CouponPageState extends State<CouponPage> {
   }
 
   _onAddButtonPressed(String code) {
-    setState(() {
-      _coupons.add(Coupon(code: code,
-          dateAdded: DateTime.now(),
-          status: Status.redeemed,
-          redeemAttempt: RedeemAttempt(
-              status: RedeemResultStatus.newBonus,
-              message: "")));
-    });
+    var coupon = Coupon(
+        code: code,
+        dateAdded: DateTime.now(),
+        status: Status.redeemed,
+        redeemAttempt:
+            RedeemAttempt(status: RedeemResultStatus.newBonus, message: ""));
+
+
+    var syncBloc = BlocProvider.of<SynchronizeBonusBloc>(context);
+
+    syncBloc.dispatch(StoreBonus(coupon));
   }
-
-
 }
 
 class SectionTitle extends StatelessWidget {

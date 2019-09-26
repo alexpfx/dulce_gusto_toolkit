@@ -1,7 +1,7 @@
-import 'package:dulce_gusto_toolkit/coupons/coupon_card/redeem_status.dart';
+import 'package:dulce_gusto_toolkit/coupons/bonus_list/coupon_card/redeem_status.dart';
 
 class Coupon {
-  static final String tableName = "coupon";
+  static final String tableName = "coupons";
   static final String columnId = "id";
   static final String columnCode = "code";
   static final String columnDateAdded = "dateAdded";
@@ -9,14 +9,23 @@ class Coupon {
   static final String columnLastMessage = "lastMessage";
   static final String columnDateLastAttempt = "dateLastAttempt";
   static final String columnStatusLastAttempt = "statusLastAttempt";
+  static final String columnMarkedForDelection = "markedForDelection";
 
   final int id;
   final String code;
   final DateTime dateAdded;
   final Status status;
+  final bool markedForDelection;
+
   RedeemAttempt redeemAttempt;
 
-  Coupon({this.code, this.dateAdded, this.status, this.redeemAttempt, this.id});
+  Coupon(
+      {this.code,
+      this.dateAdded,
+      this.status,
+      this.redeemAttempt,
+      this.id,
+      this.markedForDelection});
 
   @override
   String toString() {
@@ -27,40 +36,46 @@ class Coupon {
     return {
       columnId: id,
       columnCode: code,
-      columnDateAdded: dateAdded,
-      columnStatus: status,
+      columnMarkedForDelection:
+          markedForDelection == null || !markedForDelection ? 0 : 1,
+      columnDateAdded: dateAdded.millisecondsSinceEpoch
+      /*columnStatus: status,
       columnLastMessage: redeemAttempt.message,
       columnDateLastAttempt: redeemAttempt.date,
-      columnStatusLastAttempt: redeemAttempt.status
+      columnStatusLastAttempt: redeemAttempt.status*/
     };
   }
 
   static Coupon fromMap(Map<String, dynamic> map) {
+    var deleted = map[columnMarkedForDelection] != null &&
+        map[columnMarkedForDelection] == 1;
+
     return Coupon(
         code: map[columnCode],
         id: map[columnId],
         status: map[columnStatus],
-        dateAdded: map[columnDateAdded],
+        dateAdded: DateTime.fromMillisecondsSinceEpoch(map[columnDateAdded]),
+        markedForDelection: deleted,
         redeemAttempt: RedeemAttempt(
             status: map[columnStatusLastAttempt],
             message: map[columnLastMessage],
             date: map[columnDateLastAttempt]));
   }
 
-  Coupon copyWith({
-    int id,
-    String code,
-    DateTime dateAdded,
-    Status status,
-    RedeemAttempt redeemAttempt,
-  }) {
+  Coupon copyWith(
+      {int id,
+      String code,
+      DateTime dateAdded,
+      Status status,
+      RedeemAttempt redeemAttempt,
+      bool markedForDelection}) {
     return new Coupon(
-      id: id ?? this.id,
-      code: code ?? this.code,
-      dateAdded: dateAdded ?? this.dateAdded,
-      status: status ?? this.status,
-      redeemAttempt: redeemAttempt ?? this.redeemAttempt,
-    );
+        id: id ?? this.id,
+        code: code ?? this.code,
+        dateAdded: dateAdded ?? this.dateAdded,
+        status: status ?? this.status,
+        redeemAttempt: redeemAttempt ?? this.redeemAttempt,
+        markedForDelection: markedForDelection ?? this.markedForDelection);
   }
 }
 

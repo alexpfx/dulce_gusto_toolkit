@@ -61,8 +61,8 @@ class RedeemBloc extends Bloc<RedeemEvent, RedeemState> {
   }
 
   update(Coupon coupon, ResultMessageState message) async* {
-    await dbHelper.updateBonus(coupon.copyWith());
-    yield CompletedState(message.message, coupon);
+    int id = await dbHelper.saveOrUpdateBonus(coupon.copyWith());
+    yield CompletedState(message.message, coupon.copyWith(id: id));
   }
 
   RedeemState getStateByMessage(String message, String code) {

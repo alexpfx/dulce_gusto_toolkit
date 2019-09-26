@@ -10,11 +10,34 @@ abstract class SynchronizeBonusState extends Equatable {
 class InitialSynchronizeBonusState extends SynchronizeBonusState {}
 
 
-class BonusWasUpdatedState extends SynchronizeBonusState{
+class GetBonusState extends SynchronizeBonusState{
 
   final Coupon coupon;
+  GetBonusState(this.coupon): super([coupon]);
 
-  BonusWasUpdatedState(this.coupon): super([coupon]);
+
+}
+
+class BonusWasStored extends SynchronizeBonusState{
+  final Coupon coupon;
+
+  BonusWasStored(this.coupon): super([coupon]);
+
+}
+
+class BonusWasUpdated extends SynchronizeBonusState{
+  final Coupon bonus;
+
+  BonusWasUpdated(this.bonus) : super([bonus]);
+
+
+}
+
+
+class AllBonusState extends SynchronizeBonusState{
+  final List<Coupon> bonusList;
+
+  AllBonusState(this.bonusList): super([bonusList]);
 
 
 }
