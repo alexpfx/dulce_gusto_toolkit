@@ -24,8 +24,8 @@ class SynchronizeBonusBloc
     }
 
     if (event is UpdateEvent) {
-      dbHelper.saveOrUpdateBonus(event.bonus);
-      yield BonusWasUpdated(event.bonus);
+      int id = await dbHelper.saveOrUpdateBonus(event.bonus);
+      yield BonusWasUpdated(event.bonus.copyWith(id: id));
     }
 
     if (event is StoreBonus) {

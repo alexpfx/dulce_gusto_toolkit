@@ -12,17 +12,9 @@ class InitialRedeemState extends RedeemState {}
 class LoadingState extends RedeemState {}
 
 class CompletedState extends RedeemState {
-  final String message;
-  final Coupon code;
+  final Coupon bonus;
 
-  CompletedState(this.message, this.code) : super([message, code]);
+  CompletedState(this.bonus) : super([bonus]);
 }
 
-class ResultMessageState extends RedeemState {
-  final String message;
-  final String code;
-  final bool hasError;
 
-  ResultMessageState(this.message, this.code, {this.hasError: false})
-      : super([message, code, hasError]);
-}

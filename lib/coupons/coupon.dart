@@ -33,16 +33,18 @@ class Coupon {
   }
 
   Map<String, dynamic> toMap() {
+
     return {
       columnId: id,
       columnCode: code,
       columnMarkedForDelection:
           markedForDelection == null || !markedForDelection ? 0 : 1,
-      columnDateAdded: dateAdded.millisecondsSinceEpoch
-      /*columnStatus: status,
-      columnLastMessage: redeemAttempt.message,
-      columnDateLastAttempt: redeemAttempt.date,
-      columnStatusLastAttempt: redeemAttempt.status*/
+      columnDateAdded: dateAdded.millisecondsSinceEpoch,
+      columnDateLastAttempt: redeemAttempt?.date?.millisecondsSinceEpoch,
+      columnStatusLastAttempt: redeemAttempt?.status?.index,
+      columnLastMessage: redeemAttempt?.message,
+      columnStatus: status?.index
+
     };
   }
 
@@ -50,14 +52,16 @@ class Coupon {
     var deleted = map[columnMarkedForDelection] != null &&
         map[columnMarkedForDelection] == 1;
 
+
     return Coupon(
+
         code: map[columnCode],
         id: map[columnId],
-        status: map[columnStatus],
+        status: Status.values[map[columnStatus]],
         dateAdded: DateTime.fromMillisecondsSinceEpoch(map[columnDateAdded]),
         markedForDelection: deleted,
         redeemAttempt: RedeemAttempt(
-            status: map[columnStatusLastAttempt],
+            status: RedeemResultStatus.values[map[columnStatusLastAttempt]],
             message: map[columnLastMessage],
             date: map[columnDateLastAttempt]));
   }

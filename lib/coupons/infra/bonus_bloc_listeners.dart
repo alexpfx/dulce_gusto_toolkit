@@ -32,7 +32,7 @@ class BonusBlocListeners extends StatelessWidget {
           bloc: redeemBloc,
           listener: (context, state) {
             if (state is CompletedState) {
-              var code = state.code;
+              var code = state.bonus;
               syncBloc.dispatch(UpdateEvent(code));
             }
           },

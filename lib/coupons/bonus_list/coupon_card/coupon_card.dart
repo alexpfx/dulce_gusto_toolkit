@@ -75,8 +75,6 @@ class CouponCard extends StatelessWidget {
     RedeemResultStatus status;
     debugPrint("buildByState: $state");
 
-
-
     return ListTile(
       leading: CouponCardLeading(
         onTap: () {

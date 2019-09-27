@@ -65,9 +65,12 @@ class DbHelper {
         "${Coupon.columnId} integer primary key autoincrement, "
         "${Coupon.columnCode} text not null, "
         "${Coupon.columnDateAdded} integer not null, "
-        "${Coupon.columnStatus} integer, ${Coupon.columnLastMessage} text, "
+        "${Coupon.columnStatus} integer, "
         "${Coupon.columnDateLastAttempt} integer, "
-        "${Coupon.columnMarkedForDelection} boolean check(${Coupon.columnMarkedForDelection} in(0,1)));");
+        "${Coupon.columnLastMessage} text, "
+        "${Coupon.columnStatusLastAttempt} integer, "
+        "${Coupon.columnMarkedForDelection} boolean check(${Coupon.columnMarkedForDelection} in(0,1)));")
+    ;
   }
 
 

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
+import 'package:dulce_gusto_toolkit/coupons/bonus_list/coupon_card/redeem_status.dart';
 import 'package:dulce_gusto_toolkit/coupons/coupon.dart';
 import 'package:dulce_gusto_toolkit/coupons/dg_session.dart';
 import 'package:dulce_gusto_toolkit/model/data/database_helper.dart';
@@ -39,38 +40,43 @@ class RedeemBloc extends Bloc<RedeemEvent, RedeemState> {
 
       var message = await getResultMessage(session, coupon);
       yield message;
-
-      update(coupon, message);
     }
   }
 
-  Future<ResultMessageState> getResultMessage(
+  Future<CompletedState> getResultMessage(
       DolceGustoSession session, Coupon coupon) async {
     if (_logged) {
       var message = await session.storeBonus(coupon.code);
       if (message != null) {
-        return getStateByMessage(message, coupon.code);
+        var newBonus = updateCoupon(message, coupon);
+        return CompletedState(newBonus);
       } else {
-        return ResultMessageState("Não pôde adicionar cupom.", coupon.code,
-            hasError: true);
+        return CompletedState(coupon.copyWith(
+            redeemAttempt: RedeemAttempt(
+                date: DateTime.now(),
+                message: "Não pode adicionar bonus",
+                status: RedeemResultStatus.info_fail)));
       }
     } else {
-      return ResultMessageState("Não pôde adicionar cupom.", coupon.code,
-          hasError: true);
+      return CompletedState(coupon.copyWith(
+          redeemAttempt: RedeemAttempt(
+              date: DateTime.now(),
+              message: "Não pode adicionar bonus",
+              status: RedeemResultStatus.info_fail)));
     }
   }
 
-  update(Coupon coupon, ResultMessageState message) async* {
-    int id = await dbHelper.saveOrUpdateBonus(coupon.copyWith());
-    yield CompletedState(message.message, coupon.copyWith(id: id));
-  }
-
-  RedeemState getStateByMessage(String message, String code) {
+  Coupon updateCoupon(String message, Coupon bonus) {
     String upMessage = message.toUpperCase();
+    RedeemResultStatus status;
     if (upMessage.contains('BONUS FORAM CREDITADOS')) {
-      return ResultMessageState(message, code);
+      status = RedeemResultStatus.info_ok;
     } else {
-      return ResultMessageState(message, code, hasError: true);
+      status = RedeemResultStatus.info_fail;
     }
+
+    return bonus.copyWith(
+        redeemAttempt: RedeemAttempt(
+            status: status, message: upMessage, date: DateTime.now()));
   }
 }
